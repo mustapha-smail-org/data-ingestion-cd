@@ -1,0 +1,11 @@
+apiVersion: delivery.citypulse.io/v1
+kind: ServiceDeployment
+metadata:
+  name: data-ingestion
+  owner: data-platform
+spec:
+  provider: render
+  imageRepository: ghcr.io/mustapha-smail-org/data-ingestion
+  health:
+    path: /actuator/health/readiness
+    timeoutSeconds: 300
