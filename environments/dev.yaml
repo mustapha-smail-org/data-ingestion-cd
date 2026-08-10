@@ -4,11 +4,11 @@
 # until the first deployment runs — do not edit them by hand.
 environment: dev
 image:
-  tag: unset
-  digest: "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+  tag: sha-844d507
+  digest: "sha256:d4580190229e9b0e3aba1d0537f86b572894f4718157d450ffe4449c69e0f763"
 source:
   repository: mustapha-smail-org/data-ingestion
-  commit: "0000000"
+  commit: "844d507717b09238972f974009dd37b384629773"
 provider:
   # Render Free Plan: dev and staging share one service until upgraded.
   serviceId: data-ingestion-dev-staging
