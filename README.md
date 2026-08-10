@@ -22,6 +22,19 @@ environments/
 `service.yaml` and each `environments/*.yaml` conform to the schemas in
 `deployment-workflows/contracts/`.
 
+## Required repo configuration
+
+- **Variable** `AUTOMATION_APP_ID` and **secret** `AUTOMATION_APP_PRIVATE_KEY` —
+  yes, on *this* repo too, not just `data-ingestion`. `deploy.yml` authenticates as
+  the `city-pulse-automation` App before checkout/push so the branch ruleset's App
+  bypass entry actually applies; without these, `deploy.yml` falls back to the
+  default `GITHUB_TOKEN` (identity `github-actions[bot]`), which is a different
+  actor than the bypass list allows, and the push is rejected with `GH013`.
+- **Secret** `RENDER_API_KEY` — used by `deploy-render.yml`.
+- The `main` branch ruleset must list `city-pulse-automation` in its **bypass
+  list** with mode **Always** (`Settings → Rules → Rulesets`), or every
+  `deploy.yml` run fails to push the desired-state commit.
+
 ## Render Free Plan note
 
 This organization currently has 2 Render services available (free plan), so `dev`
