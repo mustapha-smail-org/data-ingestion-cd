@@ -40,8 +40,17 @@ jobs:
       service-id: ${{ steps.read.outputs.service_id }}
       image-repository: ${{ steps.read.outputs.image_repository }}
     steps:
+      - name: Obtain GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1
+        with:
+          app-id: ${{ vars.AUTOMATION_APP_ID }}
+          private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
+
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Validate digest format
         run: |
