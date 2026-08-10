@@ -1,0 +1,14 @@
+# Desired state for the dev environment.
+# Updated automatically by .github/workflows/deploy.yml on every merge to
+# data-ingestion's main branch. tag/digest/commit below are placeholders
+# until the first deployment runs — do not edit them by hand.
+environment: dev
+image:
+  tag: unset
+  digest: "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+source:
+  repository: mustapha-smail-org/data-ingestion
+  commit: "0000000"
+provider:
+  # Render Free Plan: dev and staging share one service until upgraded.
+  serviceId: data-ingestion-dev-staging

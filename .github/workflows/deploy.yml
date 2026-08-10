@@ -1,0 +1,102 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options: [dev, staging, production]
+      image_digest:
+        description: 'Immutable OCI image digest (sha256:...)'
+        required: true
+        type: string
+      source_commit:
+        description: 'Source commit SHA the image was built from'
+        required: true
+        type: string
+      image_tag:
+        description: 'Human-readable tag for this deployment (sha-xxxxxxx or vX.Y.Z)'
+        required: true
+        type: string
+      health_check_url:
+        description: 'Optional base URL for post-deploy health verification'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-data-ingestion-${{ inputs.environment }}
+  cancel-in-progress: ${{ inputs.environment == 'dev' }}
+
+jobs:
+  update-desired-state:
+    runs-on: ubuntu-latest
+    outputs:
+      service-id: ${{ steps.read.outputs.service_id }}
+      image-repository: ${{ steps.read.outputs.image_repository }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Validate digest format
+        run: |
+          if [[ ! "${{ inputs.image_digest }}" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+            echo "::error::image_digest must be an immutable sha256 digest, got: ${{ inputs.image_digest }}"
+            exit 1
+          fi
+
+      - name: Update environment desired state
+        env:
+          ENV_FILE: environments/${{ inputs.environment }}.yaml
+        run: |
+          if [ ! -f "$ENV_FILE" ]; then
+            echo "::error::No such environment file: $ENV_FILE"
+            exit 1
+          fi
+          sed -i.bak -E \
+            -e "s|^(  tag: ).*|\1${{ inputs.image_tag }}|" \
+            -e "s|^(  digest: \").*(\")$|\1${{ inputs.image_digest }}\2|" \
+            -e "s|^(  commit: \").*(\")$|\1${{ inputs.source_commit }}\2|" \
+            "$ENV_FILE"
+          rm -f "${ENV_FILE}.bak"
+          cat "$ENV_FILE"
+
+      - name: Read resolved values
+        id: read
+        env:
+          ENV_FILE: environments/${{ inputs.environment }}.yaml
+        run: |
+          SERVICE_ID=$(grep -E '^\s*serviceId:' "$ENV_FILE" | sed -E 's/^\s*serviceId:\s*//')
+          IMAGE_REPO=$(grep -E '^\s*imageRepository:' service.yaml | sed -E 's/^\s*imageRepository:\s*//')
+          echo "service_id=${SERVICE_ID}" >> "$GITHUB_OUTPUT"
+          echo "image_repository=${IMAGE_REPO}" >> "$GITHUB_OUTPUT"
+
+      - name: Commit desired state
+        run: |
+          git config user.name "City Pulse Automation"
+          git config user.email "automation@citypulse.local"
+          git add environments/
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore(${{ inputs.environment }}): deploy data-ingestion ${{ inputs.image_tag }}"
+            git push
+          fi
+
+  deploy:
+    needs: update-desired-state
+    uses: mustapha-smail-org/deployment-workflows/.github/workflows/deploy-render.yml@main
+    with:
+      service-name: data-ingestion
+      environment: ${{ inputs.environment }}
+      image-repository: ${{ needs.update-desired-state.outputs.image-repository }}
+      image-digest: ${{ inputs.image_digest }}
+      service-id: ${{ needs.update-desired-state.outputs.service-id }}
+      health-check-url: ${{ inputs.health_check_url }}
+    secrets:
+      render-api-key: ${{ secrets.RENDER_API_KEY }}
