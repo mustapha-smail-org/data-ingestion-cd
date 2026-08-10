@@ -78,7 +78,7 @@ jobs:
 
       - name: Commit desired state
         run: |
-          git config user.name "City Pulse Automation"
+          git config user.name "city-pulse-automation"
           git config user.email "automation@citypulse.local"
           git add environments/
           if git diff --cached --quiet; then
