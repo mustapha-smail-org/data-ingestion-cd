@@ -49,15 +49,17 @@ config/
 - The `main` branch ruleset must list `city-pulse-automation` in its **bypass
   list** with mode **Always** (`Settings → Rules → Rulesets`), or every
   `deploy.yml` run fails to push the desired-state commit.
-- **Optional secrets**, one `<KEY>_DEV`/`<KEY>_STAGING`/`<KEY>_PRODUCTION` triplet
-  per real secret this service needs — currently `KAFKA_USERNAME`,
-  `KAFKA_PASSWORD`, `SCHEMA_REGISTRY_USERNAME`, `SCHEMA_REGISTRY_PASSWORD` (12
-  secrets total, 4 keys × 3 environments). Never committed; each resolved
-  per-environment via a plain `&&`/`||` expression (same pattern as
-  `RENDER_SERVICE_ID_*` above) inside `deploy.yml`'s `push-config` job. Leave
-  any unset if that particular environment/key combination isn't needed. This
-  list is unbounded — adding a 5th secret is one more `env:` line in
-  `push-config`, nothing else changes (see below).
+- **Optional secrets**, one `<KEY>_HRP`/`<KEY>_PRD` pair per real secret this
+  service needs (`HRP` = hors production, i.e. dev+staging combined; `PRD` =
+  production) — currently `KAFKA_BOOTSTRAP_SERVERS`, `KAFKA_USERNAME`,
+  `KAFKA_PASSWORD`, `KAFKA_EVENTS_TOPIC`, `SCHEMA_REGISTRY_URL`,
+  `SCHEMA_REGISTRY_USERNAME`, `SCHEMA_REGISTRY_PASSWORD`, plus
+  `KAFKA_CA_CERTIFICATE` (14 secrets total, 7 keys × 2 suffixes). Never
+  committed; each resolved via a plain `&&`/`||` expression (same pattern as
+  `RENDER_SERVICE_ID_*` above, but 2-way not 3-way) inside `deploy.yml`'s
+  `push-config` job. Leave any unset if that particular combination isn't
+  needed. This list is unbounded — adding another secret is one more `env:`
+  line in `push-config`, nothing else changes (see below).
 
 ## External app config (`config/*.yaml`)
 
@@ -92,9 +94,35 @@ for why a shared reusable workflow is the wrong place for this. Instead,
    script — never written to a file, never exposed as a job output, so it can't
    hit the masked-output-blanking issue described above.
 
-Adding a 5th secret: one new `SECRET_<NAME>` line in `push-config`'s `env:`
-block, plus the matching `<NAME>_DEV`/`_STAGING`/`_PRODUCTION` repo secrets. No
-changes needed to `deployment-workflows` at all.
+Adding a new secret: one new `SECRET_<NAME>` line in `push-config`'s `env:`
+block, plus the matching `<NAME>_HRP`/`_PRD` repo secrets (`HRP` = hors
+production, i.e. dev+staging combined; `PRD` = production — this repo's actual
+suffix convention, distinct from `RENDER_SERVICE_ID_*`'s `_DEV`/`_STAGING`/
+`_PRODUCTION`, since dev and staging currently share Kafka credentials too).
+No changes needed to `deployment-workflows` at all.
+
+## Kafka CA certificate (`config/*.yaml`'s `ca-certificate-path`)
+
+`KafkaConfig.java`'s SSL truststore cert can't go through the same
+`%%SECRET:NAME%%` substitution as everything else — a real PEM certificate is
+multi-line, and the plain-text token replacement above would corrupt the YAML
+if a multi-line value landed inside a quoted scalar. So it's pushed as its
+**own separate Render secret file** instead, by a second step in `push-config`
+("Push CA certificate to Render"):
+
+1. `KAFKA_CA_CERTIFICATE_HRP`/`_PRD` repo secrets hold the raw PEM text.
+2. Pushed directly to Render at `/etc/secrets/ca.pem` — no substitution needed,
+   since it's not embedded in a template.
+3. `config/<env>.yaml` points at it via a **plain, non-secret** field:
+   `app.kafka.ssl.ca-certificate-path: file:/etc/secrets/ca.pem`.
+4. `KafkaConfig.java`'s `@Value("${app.kafka.ssl.ca-certificate-path:classpath:
+   keystore/ca.pem}")` defaults to the bundled classpath cert — local dev and
+   tests are unaffected; only deployed environments override the path.
+
+If this secret is unset for an environment, the step logs and skips rather
+than failing — matching the app-level default, which still falls back to the
+(non-existent, in a deployed image) classpath resource and would fail at
+Kafka producer creation, same as the original bug this replaced.
 
 ## Render Free Plan note
 

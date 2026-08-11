@@ -155,6 +155,34 @@ jobs:
 
           echo "Pushed config file '${CONFIG_FILE_NAME}' to Render service"
 
+      - name: Push CA certificate to Render
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ inputs.environment == 'dev' && secrets.RENDER_SERVICE_ID_DEV || inputs.environment == 'staging' && secrets.RENDER_SERVICE_ID_STAGING || secrets.RENDER_SERVICE_ID_PRODUCTION }}
+          CA_CERTIFICATE: ${{ inputs.environment == 'production' && secrets.KAFKA_CA_CERTIFICATE_PRD || secrets.KAFKA_CA_CERTIFICATE_HRP }}
+        run: |
+          if [ -z "$CA_CERTIFICATE" ]; then
+            echo "No KAFKA_CA_CERTIFICATE_* secret configured for environment '${{ inputs.environment }}', skipping."
+            exit 0
+          fi
+
+          PAYLOAD=$(jq -n --arg content "$CA_CERTIFICATE" '{content: $content}')
+          RESPONSE=$(curl -sS -w "\n%{http_code}" -X PUT \
+            "https://api.render.com/v1/services/${RENDER_SERVICE_ID}/secret-files/ca.pem" \
+            -H "Authorization: Bearer ${RENDER_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          if [ "$HTTP_CODE" -ge 300 ]; then
+            echo "::error::Render secret-file API returned HTTP ${HTTP_CODE}: ${BODY}"
+            exit 1
+          fi
+
+          echo "Pushed CA certificate to Render service"
+
   deploy:
     needs: [update-desired-state, push-config]
     uses: mustapha-smail-org/deployment-workflows/.github/workflows/deploy-render.yml@main
