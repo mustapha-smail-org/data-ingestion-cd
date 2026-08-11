@@ -1,7 +1,5 @@
-# App config for the dev environment, mounted by deploy.yml at
-# /etc/secrets/application.yaml on Render.
-# Secret values use a %%SECRET:NAME%% token instead of a real value.
-# deploy-render.yml resolves each token from a GitHub secret at deploy time
+# App config for the dev environment, mounted by deploy.yml's push-config
+# job at /etc/secrets/application.yaml on Render.
 
 spring:
   env:
