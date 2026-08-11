@@ -30,7 +30,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: deploy-data-ingestion-${{ inputs.environment }}
+  group: cd-state-data-ingestion-${{ inputs.environment }}
   cancel-in-progress: ${{ inputs.environment == 'dev' }}
 
 jobs:
