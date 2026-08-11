@@ -9,6 +9,3 @@ image:
 source:
   repository: mustapha-smail-org/data-ingestion
   commit: "844d507717b09238972f974009dd37b384629773"
-provider:
-  # Render Free Plan: dev and staging share one service until upgraded.
-  serviceId: data-ingestion-dev-staging
