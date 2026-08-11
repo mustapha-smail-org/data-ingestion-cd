@@ -1,21 +1,39 @@
 # App config for the dev environment, mounted by deploy.yml at
-# /etc/secrets/application.yaml on Render. Keys here satisfy the same
-# ${VAR} placeholders already used in data-ingestion's application.yaml
-# (Spring resolves them from any property source, file or env var, the same
-# way).
-#
+# /etc/secrets/application.yaml on Render.
 # Secret values use a %%SECRET:NAME%% token instead of a real value.
 # deploy-render.yml resolves each token from a GitHub secret at deploy time
-# (see this repo's deploy.yml — template-var-*-name/value) — the real value
-# is never written to this file or committed to git. Currently supported
-# tokens: KAFKA_USERNAME, KAFKA_PASSWORD, SCHEMA_REGISTRY_USERNAME,
-# SCHEMA_REGISTRY_PASSWORD (backed by the *_DEV-suffixed repo secrets).
 
-KAFKA_BOOTSTRAP_SERVERS:
-KAFKA_SASL_MECHANISM: SCRAM-SHA-256
-KAFKA_EVENTS_TOPIC:
-SCHEMA_REGISTRY_URL:
-KAFKA_USERNAME: "%%SECRET:KAFKA_USERNAME%%"
-KAFKA_PASSWORD: "%%SECRET:KAFKA_PASSWORD%%"
-SCHEMA_REGISTRY_USERNAME: "%%SECRET:SCHEMA_REGISTRY_USERNAME%%"
-SCHEMA_REGISTRY_PASSWORD: "%%SECRET:SCHEMA_REGISTRY_PASSWORD%%"
+spring:
+  env:
+    active: dev
+  application:
+    name: data-ingestion
+log:
+  level:
+    root: INFO
+    app: INFO
+app:
+  kafka:
+    bootstrap-servers: "%%SECRET:KAFKA_BOOTSTRAP_SERVERS%%"
+    username: "%%SECRET:KAFKA_USERNAME%%"
+    password: "%%SECRET:KAFKA_PASSWORD%%"
+    sasl-mechanism: SCRAM-SHA-256
+
+    topic:
+      events: "%%SECRET:KAFKA_EVENTS_TOPIC%%"
+
+    schema-registry:
+      url: "%%SECRET:SCHEMA_REGISTRY_URL%%"
+      username: "%%SECRET:SCHEMA_REGISTRY_USERNAME%%"
+      password: "%%SECRET:SCHEMA_REGISTRY_PASSWORD%%"
+      auto-register-schemas: true
+api:
+  opendata:
+    paris:
+      base-url: https://opendata.paris.fr
+      dataset-id: que-faire-a-paris-
+      whereClause: ""
+ingestion:
+  schedule:
+    cron: "0 */15 * * * *"
+    zone: "Europe/Paris"

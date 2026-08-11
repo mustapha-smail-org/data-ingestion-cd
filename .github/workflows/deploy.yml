@@ -108,10 +108,13 @@ jobs:
           CONFIG_FILE: config/application-${{ inputs.environment }}.yaml
           CONFIG_FILE_NAME: application.yaml
           # External secrets:
-          SECRET_KAFKA_USERNAME: ${{ inputs.environment == 'dev' && secrets.KAFKA_USERNAME_DEV || inputs.environment == 'staging' && secrets.KAFKA_USERNAME_STAGING || secrets.KAFKA_USERNAME_PRODUCTION }}
-          SECRET_KAFKA_PASSWORD: ${{ inputs.environment == 'dev' && secrets.KAFKA_PASSWORD_DEV || inputs.environment == 'staging' && secrets.KAFKA_PASSWORD_STAGING || secrets.KAFKA_PASSWORD_PRODUCTION }}
-          SECRET_SCHEMA_REGISTRY_USERNAME: ${{ inputs.environment == 'dev' && secrets.SCHEMA_REGISTRY_USERNAME_DEV || inputs.environment == 'staging' && secrets.SCHEMA_REGISTRY_USERNAME_STAGING || secrets.SCHEMA_REGISTRY_USERNAME_PRODUCTION }}
-          SECRET_SCHEMA_REGISTRY_PASSWORD: ${{ inputs.environment == 'dev' && secrets.SCHEMA_REGISTRY_PASSWORD_DEV || inputs.environment == 'staging' && secrets.SCHEMA_REGISTRY_PASSWORD_STAGING || secrets.SCHEMA_REGISTRY_PASSWORD_PRODUCTION }}
+          SECRET_KAFKA_BOOTSTRAP_SERVERS: ${{ inputs.environment == 'production' && secrets.KAFKA_BOOTSTRAP_SERVERS_PRD || secrets.KAFKA_BOOTSTRAP_SERVERS_HRP }}
+          SECRET_KAFKA_USERNAME: ${{ inputs.environment == 'production' && secrets.KAFKA_USERNAME_PRD || secrets.KAFKA_USERNAME_HRP }}
+          SECRET_KAFKA_PASSWORD: ${{ inputs.environment == 'production' && secrets.KAFKA_PASSWORD_PRD || secrets.KAFKA_PASSWORD_HRP }}
+          SECRET_KAFKA_EVENTS_TOPIC: ${{ inputs.environment == 'production' && secrets.KAFKA_EVENTS_TOPIC_PRD || secrets.KAFKA_EVENTS_TOPIC_HRP }}
+          SECRET_SCHEMA_REGISTRY_URL: ${{ inputs.environment == 'production' && secrets.SCHEMA_REGISTRY_URL_PRD || secrets.SCHEMA_REGISTRY_URL_HRP }}
+          SECRET_SCHEMA_REGISTRY_USERNAME: ${{ inputs.environment == 'production' && secrets.SCHEMA_REGISTRY_USERNAME_PRD || secrets.SCHEMA_REGISTRY_USERNAME_HRP }}
+          SECRET_SCHEMA_REGISTRY_PASSWORD: ${{ inputs.environment == 'production' && secrets.SCHEMA_REGISTRY_PASSWORD_PRD || secrets.SCHEMA_REGISTRY_PASSWORD_HRP }}
         run: |
           if [ ! -f "$CONFIG_FILE" ]; then
             echo "No config file for environment '${{ inputs.environment }}' (${CONFIG_FILE}), skipping."
