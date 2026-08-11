@@ -37,7 +37,6 @@ jobs:
   update-desired-state:
     runs-on: ubuntu-latest
     outputs:
-      service-id: ${{ steps.service-id.outputs.service_id }}
       image-repository: ${{ steps.read.outputs.image_repository }}
     steps:
       - name: Obtain GitHub App token
@@ -81,26 +80,6 @@ jobs:
           IMAGE_REPO=$(grep -E '^\s*imageRepository:' service.yaml | sed -E 's/^\s*imageRepository:\s*//')
           echo "image_repository=${IMAGE_REPO}" >> "$GITHUB_OUTPUT"
 
-      - name: Resolve Render service ID
-        id: service-id
-        env:
-          ID_DEV: ${{ secrets.RENDER_SERVICE_ID_DEV }}
-          ID_STAGING: ${{ secrets.RENDER_SERVICE_ID_STAGING }}
-          ID_PRODUCTION: ${{ secrets.RENDER_SERVICE_ID_PRODUCTION }}
-        run: |
-          case "${{ inputs.environment }}" in
-            dev) SERVICE_ID="$ID_DEV" ;;
-            staging) SERVICE_ID="$ID_STAGING" ;;
-            production) SERVICE_ID="$ID_PRODUCTION" ;;
-            *) echo "::error::Unknown environment '${{ inputs.environment }}'"; exit 1 ;;
-          esac
-          if [ -z "$SERVICE_ID" ]; then
-            echo "::error::No RENDER_SERVICE_ID_* secret configured for environment '${{ inputs.environment }}'"
-            exit 1
-          fi
-          echo "::add-mask::$SERVICE_ID"
-          echo "service_id=${SERVICE_ID}" >> "$GITHUB_OUTPUT"
-
       - name: Commit desired state
         run: |
           git config user.name "city-pulse-automation"
@@ -121,7 +100,7 @@ jobs:
       environment: ${{ inputs.environment }}
       image-repository: ${{ needs.update-desired-state.outputs.image-repository }}
       image-digest: ${{ inputs.image_digest }}
-      service-id: ${{ needs.update-desired-state.outputs.service-id }}
       health-check-url: ${{ inputs.health_check_url }}
     secrets:
       render-api-key: ${{ secrets.RENDER_API_KEY }}
+      service-id: ${{ inputs.environment == 'dev' && secrets.RENDER_SERVICE_ID_DEV || inputs.environment == 'staging' && secrets.RENDER_SERVICE_ID_STAGING || secrets.RENDER_SERVICE_ID_PRODUCTION }}
