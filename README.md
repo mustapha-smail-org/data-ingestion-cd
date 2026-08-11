@@ -34,11 +34,14 @@ environments/
 - **Secrets** `RENDER_SERVICE_ID_DEV`, `RENDER_SERVICE_ID_STAGING`,
   `RENDER_SERVICE_ID_PRODUCTION` — the actual Render `srv-...` service IDs (not
   the human-readable service name shown in the Render dashboard URL). These are
-  deliberately **not** stored in `environments/*.yaml` — real Render IDs are
-  effectively an access handle to that service, so `deploy.yml` resolves the
-  right one per environment from these secrets at deploy time instead of keeping
-  them in Git history. See `.github/workflows/deploy.yml`'s "Resolve Render
-  service ID" step.
+  deliberately **not** stored in `environments/*.yaml`, and deliberately **not**
+  resolved in a `run:` step either — the `deploy` job's `secrets:` block picks
+  the right one via a plain `&&`/`||` expression on `inputs.environment`
+  (evaluated before any job runs). Routing a secret through a step/job output
+  into another job's `with:`/`secrets:` doesn't work: GitHub Actions silently
+  blanks any job output derived from a masked value once it crosses that
+  boundary (see `deployment-workflows/docs/WORKFLOW_CONTRACTS.md`, "Secret job
+  outputs get blanked, not passed through").
 - The `main` branch ruleset must list `city-pulse-automation` in its **bypass
   list** with mode **Always** (`Settings → Rules → Rulesets`), or every
   `deploy.yml` run fails to push the desired-state commit.
