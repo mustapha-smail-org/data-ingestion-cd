@@ -108,13 +108,13 @@ jobs:
           CONFIG_FILE: config/application-${{ inputs.environment }}.yaml
           CONFIG_FILE_NAME: application.yaml
           # External secrets:
-          SECRET_KAFKA_BOOTSTRAP_SERVERS: ${{ inputs.environment == 'production' && secrets.KAFKA_BOOTSTRAP_SERVERS_PRD || secrets.KAFKA_BOOTSTRAP_SERVERS_HRP }}
-          SECRET_KAFKA_USERNAME: ${{ inputs.environment == 'production' && secrets.KAFKA_USERNAME_PRD || secrets.KAFKA_USERNAME_HRP }}
-          SECRET_KAFKA_PASSWORD: ${{ inputs.environment == 'production' && secrets.KAFKA_PASSWORD_PRD || secrets.KAFKA_PASSWORD_HRP }}
-          SECRET_KAFKA_EVENTS_TOPIC: ${{ inputs.environment == 'production' && secrets.KAFKA_EVENTS_TOPIC_PRD || secrets.KAFKA_EVENTS_TOPIC_HRP }}
-          SECRET_SCHEMA_REGISTRY_URL: ${{ inputs.environment == 'production' && secrets.SCHEMA_REGISTRY_URL_PRD || secrets.SCHEMA_REGISTRY_URL_HRP }}
-          SECRET_SCHEMA_REGISTRY_USERNAME: ${{ inputs.environment == 'production' && secrets.SCHEMA_REGISTRY_USERNAME_PRD || secrets.SCHEMA_REGISTRY_USERNAME_HRP }}
-          SECRET_SCHEMA_REGISTRY_PASSWORD: ${{ inputs.environment == 'production' && secrets.SCHEMA_REGISTRY_PASSWORD_PRD || secrets.SCHEMA_REGISTRY_PASSWORD_HRP }}
+          SECRET_KAFKA_BOOTSTRAP_SERVERS: ${{ inputs.environment == 'production' && secrets.KAFKA_BOOTSTRAP_SERVERS_PRD || secrets.KAFKA_BOOTSTRAP_SERVERS_HPR }}
+          SECRET_KAFKA_USERNAME: ${{ inputs.environment == 'production' && secrets.KAFKA_USERNAME_PRD || secrets.KAFKA_USERNAME_HPR }}
+          SECRET_KAFKA_PASSWORD: ${{ inputs.environment == 'production' && secrets.KAFKA_PASSWORD_PRD || secrets.KAFKA_PASSWORD_HPR }}
+          SECRET_KAFKA_EVENTS_TOPIC: ${{ inputs.environment == 'production' && secrets.KAFKA_EVENTS_TOPIC_PRD || secrets.KAFKA_EVENTS_TOPIC_HPR }}
+          SECRET_SCHEMA_REGISTRY_URL: ${{ inputs.environment == 'production' && secrets.SCHEMA_REGISTRY_URL_PRD || secrets.SCHEMA_REGISTRY_URL_HPR }}
+          SECRET_SCHEMA_REGISTRY_USERNAME: ${{ inputs.environment == 'production' && secrets.SCHEMA_REGISTRY_USERNAME_PRD || secrets.SCHEMA_REGISTRY_USERNAME_HPR }}
+          SECRET_SCHEMA_REGISTRY_PASSWORD: ${{ inputs.environment == 'production' && secrets.SCHEMA_REGISTRY_PASSWORD_PRD || secrets.SCHEMA_REGISTRY_PASSWORD_HPR }}
         run: |
           if [ ! -f "$CONFIG_FILE" ]; then
             echo "No config file for environment '${{ inputs.environment }}' (${CONFIG_FILE}), skipping."
@@ -159,7 +159,7 @@ jobs:
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           RENDER_SERVICE_ID: ${{ inputs.environment == 'dev' && secrets.RENDER_SERVICE_ID_DEV || inputs.environment == 'staging' && secrets.RENDER_SERVICE_ID_STAGING || secrets.RENDER_SERVICE_ID_PRODUCTION }}
-          CA_CERTIFICATE: ${{ inputs.environment == 'production' && secrets.KAFKA_CA_CERTIFICATE_PRD || secrets.KAFKA_CA_CERTIFICATE_HRP }}
+          CA_CERTIFICATE: ${{ inputs.environment == 'production' && secrets.KAFKA_CA_CERTIFICATE_PRD || secrets.KAFKA_CA_CERTIFICATE_HPR }}
         run: |
           if [ -z "$CA_CERTIFICATE" ]; then
             echo "No KAFKA_CA_CERTIFICATE_* secret configured for environment '${{ inputs.environment }}', skipping."
