@@ -15,6 +15,8 @@ app:
     username: "%%SECRET:KAFKA_USERNAME%%"
     password: "%%SECRET:KAFKA_PASSWORD%%"
     sasl-mechanism: SCRAM-SHA-256
+    ssl:
+      ca-certificate-path: file:/etc/secrets/ca.pem
 
     topic:
       events: "%%SECRET:KAFKA_EVENTS_TOPIC%%"
