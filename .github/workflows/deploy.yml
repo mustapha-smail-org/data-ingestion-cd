@@ -92,8 +92,71 @@ jobs:
             git push
           fi
 
-  deploy:
+  push-config:
     needs: update-desired-state
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Resolve and push config file to Render
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ inputs.environment == 'dev' && secrets.RENDER_SERVICE_ID_DEV || inputs.environment == 'staging' && secrets.RENDER_SERVICE_ID_STAGING || secrets.RENDER_SERVICE_ID_PRODUCTION }}
+          CONFIG_FILE: config/application-${{ inputs.environment }}.yaml
+          CONFIG_FILE_NAME: application.yaml
+          # External secrets:
+          SECRET_KAFKA_BOOTSTRAP_SERVERS: ${{ inputs.environment == 'production' && secrets.KAFKA_BOOTSTRAP_SERVERS_PRD || secrets.KAFKA_BOOTSTRAP_SERVERS_HRP }}
+          SECRET_KAFKA_USERNAME: ${{ inputs.environment == 'production' && secrets.KAFKA_USERNAME_PRD || secrets.KAFKA_USERNAME_HRP }}
+          SECRET_KAFKA_PASSWORD: ${{ inputs.environment == 'production' && secrets.KAFKA_PASSWORD_PRD || secrets.KAFKA_PASSWORD_HRP }}
+          SECRET_KAFKA_EVENTS_TOPIC: ${{ inputs.environment == 'production' && secrets.KAFKA_EVENTS_TOPIC_PRD || secrets.KAFKA_EVENTS_TOPIC_HRP }}
+          SECRET_SCHEMA_REGISTRY_URL: ${{ inputs.environment == 'production' && secrets.SCHEMA_REGISTRY_URL_PRD || secrets.SCHEMA_REGISTRY_URL_HRP }}
+          SECRET_SCHEMA_REGISTRY_USERNAME: ${{ inputs.environment == 'production' && secrets.SCHEMA_REGISTRY_USERNAME_PRD || secrets.SCHEMA_REGISTRY_USERNAME_HRP }}
+          SECRET_SCHEMA_REGISTRY_PASSWORD: ${{ inputs.environment == 'production' && secrets.SCHEMA_REGISTRY_PASSWORD_PRD || secrets.SCHEMA_REGISTRY_PASSWORD_HRP }}
+        run: |
+          if [ ! -f "$CONFIG_FILE" ]; then
+            echo "No config file for environment '${{ inputs.environment }}' (${CONFIG_FILE}), skipping."
+            exit 0
+          fi
+
+          RESOLVED=$(cat "$CONFIG_FILE")
+          for VAR_NAME in $(compgen -v | grep '^SECRET_'); do
+            TOKEN_NAME="${VAR_NAME#SECRET_}"
+            VALUE="${!VAR_NAME}"
+            RESOLVED="${RESOLVED//%%SECRET:${TOKEN_NAME}%%/${VALUE}}"
+          done
+
+          if echo "$RESOLVED" | grep -q '%%SECRET:'; then
+            echo "::error::Unresolved %%SECRET:...%% placeholder(s) remain in ${CONFIG_FILE} — check that a matching SECRET_<NAME> env var is declared in this step"
+            exit 1
+          fi
+
+          if [ -z "$RENDER_SERVICE_ID" ]; then
+            echo "::error::No RENDER_SERVICE_ID_* secret configured for environment '${{ inputs.environment }}'"
+            exit 1
+          fi
+
+          PAYLOAD=$(jq -n --arg content "$RESOLVED" '{content: $content}')
+          RESPONSE=$(curl -sS -w "\n%{http_code}" -X PUT \
+            "https://api.render.com/v1/services/${RENDER_SERVICE_ID}/secret-files/${CONFIG_FILE_NAME}" \
+            -H "Authorization: Bearer ${RENDER_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          if [ "$HTTP_CODE" -ge 300 ]; then
+            echo "::error::Render secret-file API returned HTTP ${HTTP_CODE}: ${BODY}"
+            exit 1
+          fi
+
+          echo "Pushed config file '${CONFIG_FILE_NAME}' to Render service"
+
+  deploy:
+    needs: [update-desired-state, push-config]
     uses: mustapha-smail-org/deployment-workflows/.github/workflows/deploy-render.yml@main
     with:
       service-name: data-ingestion
