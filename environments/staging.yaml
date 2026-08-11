@@ -9,7 +9,3 @@ image:
 source:
   repository: mustapha-smail-org/data-ingestion
   commit: "0000000"
-provider:
-  # Render Free Plan: staging shares the dev service until upgraded to a paid
-  # plan. Give staging its own serviceId once a third Render service exists.
-  serviceId: data-ingestion-dev-staging

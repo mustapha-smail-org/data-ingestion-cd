@@ -31,17 +31,26 @@ environments/
   default `GITHUB_TOKEN` (identity `github-actions[bot]`), which is a different
   actor than the bypass list allows, and the push is rejected with `GH013`.
 - **Secret** `RENDER_API_KEY` — used by `deploy-render.yml`.
+- **Secrets** `RENDER_SERVICE_ID_DEV`, `RENDER_SERVICE_ID_STAGING`,
+  `RENDER_SERVICE_ID_PRODUCTION` — the actual Render `srv-...` service IDs (not
+  the human-readable service name shown in the Render dashboard URL). These are
+  deliberately **not** stored in `environments/*.yaml` — real Render IDs are
+  effectively an access handle to that service, so `deploy.yml` resolves the
+  right one per environment from these secrets at deploy time instead of keeping
+  them in Git history. See `.github/workflows/deploy.yml`'s "Resolve Render
+  service ID" step.
 - The `main` branch ruleset must list `city-pulse-automation` in its **bypass
   list** with mode **Always** (`Settings → Rules → Rulesets`), or every
   `deploy.yml` run fails to push the desired-state commit.
 
 ## Render Free Plan note
 
-This organization currently has 2 Render services available (free plan), so `dev`
-and `staging` both point at `data-ingestion-dev-staging`. `production` has its own
-service, `data-ingestion-prod`. When upgrading to a paid Render plan, create a
-dedicated staging service and update `environments/staging.yaml`'s
-`provider.serviceId` — no workflow changes are needed.
+This organization currently has 2 Render services available (free plan), so
+`RENDER_SERVICE_ID_DEV` and `RENDER_SERVICE_ID_STAGING` currently hold the **same**
+value. `RENDER_SERVICE_ID_PRODUCTION` points at a separate service. When upgrading
+to a paid Render plan, create a dedicated staging service and update the
+`RENDER_SERVICE_ID_STAGING` secret to its ID — no workflow or environments/*.yaml
+changes are needed.
 
 ## How deployments happen
 

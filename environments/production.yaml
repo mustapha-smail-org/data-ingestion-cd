@@ -9,5 +9,3 @@ image:
 source:
   repository: mustapha-smail-org/data-ingestion
   commit: "0000000"
-provider:
-  serviceId: data-ingestion-prod
