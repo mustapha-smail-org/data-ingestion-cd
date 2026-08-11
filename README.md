@@ -49,8 +49,8 @@ config/
 - The `main` branch ruleset must list `city-pulse-automation` in its **bypass
   list** with mode **Always** (`Settings → Rules → Rulesets`), or every
   `deploy.yml` run fails to push the desired-state commit.
-- **Optional secrets**, one `<KEY>_HRP`/`<KEY>_PRD` pair per real secret this
-  service needs (`HRP` = hors production, i.e. dev+staging combined; `PRD` =
+- **Optional secrets**, one `<KEY>_HPR`/`<KEY>_PRD` pair per real secret this
+  service needs (`HPR` = hors production, i.e. dev+staging combined; `PRD` =
   production) — currently `KAFKA_BOOTSTRAP_SERVERS`, `KAFKA_USERNAME`,
   `KAFKA_PASSWORD`, `KAFKA_EVENTS_TOPIC`, `SCHEMA_REGISTRY_URL`,
   `SCHEMA_REGISTRY_USERNAME`, `SCHEMA_REGISTRY_PASSWORD`, plus
@@ -95,7 +95,7 @@ for why a shared reusable workflow is the wrong place for this. Instead,
    hit the masked-output-blanking issue described above.
 
 Adding a new secret: one new `SECRET_<NAME>` line in `push-config`'s `env:`
-block, plus the matching `<NAME>_HRP`/`_PRD` repo secrets (`HRP` = hors
+block, plus the matching `<NAME>_HPR`/`_PRD` repo secrets (`HPR` = hors
 production, i.e. dev+staging combined; `PRD` = production — this repo's actual
 suffix convention, distinct from `RENDER_SERVICE_ID_*`'s `_DEV`/`_STAGING`/
 `_PRODUCTION`, since dev and staging currently share Kafka credentials too).
@@ -110,7 +110,7 @@ if a multi-line value landed inside a quoted scalar. So it's pushed as its
 **own separate Render secret file** instead, by a second step in `push-config`
 ("Push CA certificate to Render"):
 
-1. `KAFKA_CA_CERTIFICATE_HRP`/`_PRD` repo secrets hold the raw PEM text.
+1. `KAFKA_CA_CERTIFICATE_HPR`/`_PRD` repo secrets hold the raw PEM text.
 2. Pushed directly to Render at `/etc/secrets/ca.pem` — no substitution needed,
    since it's not embedded in a template.
 3. `config/<env>.yaml` points at it via a **plain, non-secret** field:
