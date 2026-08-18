@@ -4,8 +4,8 @@
 # until the first deployment runs — do not edit them by hand.
 environment: dev
 image:
-  tag: sha-9c88f19
-  digest: "sha256:3527150df4c276adf129d88e319e2032f373af48037d3cbe6eb2f06864f425ce"
+  tag: sha-e8c2bb7
+  digest: "sha256:a486a966131d5a9fd8041e7b3b5b6c0eac888dbab7df43793e152cc4c28aa94d"
 source:
   repository: mustapha-smail-org/data-ingestion
-  commit: "9c88f19ce835822b7e1031c797ff60e8920f7a34"
+  commit: "e8c2bb785145b484dacd5e9ccc603a2fc4de1f38"
