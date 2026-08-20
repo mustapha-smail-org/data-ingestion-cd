@@ -4,8 +4,8 @@
 # placeholders until the first release runs — do not edit them by hand.
 environment: staging
 image:
-  tag: v0.0.1
-  digest: "sha256:3527150df4c276adf129d88e319e2032f373af48037d3cbe6eb2f06864f425ce"
+  tag: v0.1.0
+  digest: "sha256:323994afaff48bcd8f2b8fd70cf48021c04219b671bc5719bfc7c9e3206714c9"
 source:
   repository: mustapha-smail-org/data-ingestion
-  commit: "9c88f19ce835822b7e1031c797ff60e8920f7a34"
+  commit: "7a8b87049d9e007047a9173d8e2657ceb5bdf7d1"
